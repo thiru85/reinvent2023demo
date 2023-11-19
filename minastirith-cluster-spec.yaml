@@ -1,0 +1,74 @@
+apiVersion: eksctl.io/v1alpha5
+availabilityZones:
+- us-east-1f
+- us-east-1a
+cloudWatch:
+  clusterLogging: {}
+iam:
+  vpcResourceControllerPolicy: true
+  withOIDC: true
+kind: ClusterConfig
+kubernetesNetworkConfig:
+  ipFamily: IPv4
+managedNodeGroups:
+- amiFamily: Bottlerocket
+  desiredCapacity: 3
+  disableIMDSv1: true
+  disablePodIMDS: false
+  iam:
+    withAddonPolicies:
+      albIngress: false
+      appMesh: false
+      appMeshPreview: false
+      autoScaler: false
+      awsLoadBalancerController: true
+      certManager: true
+      cloudWatch: true
+      ebs: true
+      efs: false
+      externalDNS: false
+      fsx: false
+      imageBuilder: false
+      xRay: true
+  instanceSelector: {}
+  instanceType: t4g.medium
+  labels:
+    alpha.eksctl.io/cluster-name: minas-tirith
+    alpha.eksctl.io/nodegroup-name: white-tree
+  maxSize: 3
+  minSize: 2
+  name: white-tree
+  privateNetworking: false
+  releaseVersion: ""
+  subnets: 
+  securityGroups:
+    withLocal: null
+    withShared: null
+  ssh:
+    allow: false
+    publicKeyPath: ""
+  tags:
+    alpha.eksctl.io/nodegroup-name: white-tree
+    alpha.eksctl.io/nodegroup-type: managed
+  volumeIOPS: 3000
+  volumeSize: 80
+  volumeThroughput: 125
+  volumeType: gp3
+  bottlerocket:
+    enableAdminContainer: true
+metadata:
+  name: minas-tirith
+  region: us-east-1
+  version: "1.27"
+privateCluster:
+  enabled: false
+  skipEndpointCreation: false
+vpc:
+  autoAllocateIPv6: false
+  cidr: 172.16.16.0/22
+  clusterEndpoints:
+    privateAccess: false
+    publicAccess: true
+  manageSharedNodeSecurityGroupRules: true
+  nat:
+    gateway: Single
