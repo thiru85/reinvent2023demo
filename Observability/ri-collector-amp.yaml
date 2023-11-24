@@ -1,0 +1,310 @@
+#
+# OpenTelemetry Collector configuration
+# Metrics pipeline with Prometheus Receiver and Prometheus Remote Write Exporter sending metrics to Amazon Managed Prometheus
+#
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: amp-otel
+  namespace: opentelemetry-operator-system
+spec:
+  mode: deployment
+  serviceAccount: adot-collector
+  podAnnotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '8888'
+  resources:
+    requests:
+      cpu: "750m"
+    limits:
+      cpu: "800m"
+  env:
+    - name: CLUSTER_NAME
+      value: osgiliath
+  config: |
+    extensions:
+      sigv4auth:
+        region: "us-east-1"
+        service: "aps"
+
+    receivers:
+      #
+      # Scrape configuration for the Prometheus Receiver
+      # This is the same configuration used when Prometheus is installed using the community Helm chart
+      # 
+      prometheus:
+        config:
+          global:
+            scrape_interval: 15s
+            scrape_timeout: 10s
+
+          scrape_configs:
+
+          - job_name: 'kubernetes-pod-appmesh-envoy'
+          sample_limit: 10000
+          metrics_path: /stats/prometheus
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            - source_labels: [ __meta_kubernetes_pod_container_name ]
+              action: keep
+              regex: '^envoy$'
+            - source_labels: [ __address__, __meta_kubernetes_pod_annotation_prometheus_io_port ]
+              action: replace
+              regex: ([^:]+)(?::\d+)?;(\d+)
+              replacement: $${1}:9901
+              target_label: __address__
+            - action: labelmap
+              regex: __meta_kubernetes_pod_label_(.+)
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: Namespace
+            - source_labels: [ __meta_kubernetes_pod_name ]
+              action: replace
+              target_label: pod_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_container_name
+              target_label: container_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_controller_name
+              target_label: pod_controller_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_controller_kind
+              target_label: pod_controller_kind
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_phase
+              target_label: pod_phase
+        - job_name: 'kubernetes-pod-fluentbit-plugin'
+          sample_limit: 10000
+          metrics_path: /api/v1/metrics/prometheus
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            - source_labels: [ __meta_kubernetes_pod_container_name ]
+              action: keep
+              regex: '^fluent-bit.*$'
+            - source_labels: [ __address__ ]
+              action: replace
+              regex: ([^:]+)(?::\d+)?
+              replacement: ${1}:2020
+              target_label: __address__
+            - action: labelmap
+              regex: __meta_kubernetes_pod_label_(.+)
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: Namespace
+            - source_labels: [ __meta_kubernetes_pod_name ]
+              action: replace
+              target_label: pod_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_container_name
+              target_label: container_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_controller_name
+              target_label: pod_controller_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_controller_kind
+              target_label: pod_controller_kind
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_phase
+              target_label: pod_phase
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_node_name
+              target_label: container_name
+          metric_relabel_configs:
+            - source_labels: [ __name__ ]
+              regex: 'go_gc_duration_seconds.*'
+              action: drop
+            - source_labels: [ __name__, proxy ]
+              regex: "haproxy_frontend.+;(.+)"
+              target_label: frontend
+              replacement: "$$1"
+            - source_labels: [ __name__, proxy ]
+              regex: "haproxy_server.+;(.+)"
+              target_label: backend
+              replacement: "$$1"
+            - source_labels: [ __name__, proxy ]
+              regex: "haproxy_backend.+;(.+)"
+              target_label: backend
+              replacement: "$$1"
+            - regex: proxy
+              action: labeldrop
+        - job_name: kubernetes-service-endpoints
+          sample_limit: 10000
+          kubernetes_sd_configs:
+            - role: endpoints
+          relabel_configs:
+            - action: keep
+              regex: true
+              source_labels:
+                - __meta_kubernetes_service_annotation_prometheus_io_scrape
+            - action: replace
+              regex: (https?)
+              source_labels:
+                - __meta_kubernetes_service_annotation_prometheus_io_scheme
+              target_label: __scheme__
+            - action: replace
+              regex: (.+)
+              source_labels:
+                - __meta_kubernetes_service_annotation_prometheus_io_path
+              target_label: __metrics_path__
+            - action: replace
+              regex: ([^:]+)(?::\d+)?;(\d+)
+              replacement: $$1:$$2
+              source_labels:
+                - __address__
+                - __meta_kubernetes_service_annotation_prometheus_io_port
+              target_label: __address__
+            - action: labelmap
+              regex: __meta_kubernetes_service_label_(.+)
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: Namespace
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_service_name
+              target_label: Service
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_node_name
+              target_label: kubernetes_node
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_name
+              target_label: pod_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_container_name
+              target_label: container_name
+          metric_relabel_configs:
+            - source_labels: [ __name__ ]
+              regex: 'go_gc_duration_seconds.*'
+              action: drop
+            - source_labels: [ __name__, proxy ]
+              regex: "haproxy_frontend.+;(.+)"
+              target_label: frontend
+              replacement: "$$1"
+            - source_labels: [ __name__, proxy ]
+              regex: "haproxy_server.+;(.+)"
+              target_label: backend
+              replacement: "$$1"
+            - source_labels: [ __name__, proxy ]
+              regex: "haproxy_backend.+;(.+)"
+              target_label: backend
+              replacement: "$$1"
+            - regex: proxy
+              action: labeldrop
+        - job_name: 'kubernetes-pod-jmx'
+          sample_limit: 10000
+          metrics_path: /metrics
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            - source_labels: [ __address__ ]
+              action: keep
+              regex: '.*:9404$'
+            - action: labelmap
+              regex: __meta_kubernetes_pod_label_(.+)
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: Namespace
+            - source_labels: [ __meta_kubernetes_pod_name ]
+              action: replace
+              target_label: pod_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_container_name
+              target_label: container_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_controller_name
+              target_label: pod_controller_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_controller_kind
+              target_label: pod_controller_kind
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_phase
+              target_label: pod_phase
+          metric_relabel_configs:
+            - source_labels: [ __name__ ]
+              regex: 'jvm_gc_collection_seconds.*'
+              action: drop
+                                
+    processors:
+      batch/metrics:
+        timeout: 60s         
+
+    exporters:
+      prometheusremotewrite:
+        endpoint: https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-4feca707-5945-4fa5-a8af-e50da96ea6aa/api/v1/remote_write
+        auth:
+          authenticator: sigv4auth
+
+    service:
+      extensions: [sigv4auth]
+      pipelines:   
+        metrics:
+          receivers: [prometheus]
+          processors: [batch/metrics]
+          exporters: [prometheusremotewrite]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-prometheus-role
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-prometheus-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-prometheus-role
+subjects:
+  - kind: ServiceAccount
+    name: adot-collector
+    namespace: opentelemetry-operator-system

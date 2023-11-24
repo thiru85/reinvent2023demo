@@ -1,0 +1,11 @@
+groups:
+- name: RestartErrors
+  rules:
+  - alert: RestartsHigh
+    expr: increase(kube_pod_container_status_restarts_total{namespace="cakeapi"}[1m]) > 1
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "Help! The rate of restarts is high, something is definitely wrong"
+      description: "Help! The rate of restarts is high, something is definitely wrong"

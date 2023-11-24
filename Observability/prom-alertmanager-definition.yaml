@@ -1,0 +1,12 @@
+alertmanager_config: |
+  route:
+    receiver: 'default'
+  receivers:
+    - name: 'default'
+      sns_configs:
+      - topic_arn: arn:aws:sns:us-east-1:081324788528:reinvent2023demo
+        sigv4:
+          region: us-east-1
+        attributes:
+          key: AlertType
+          value: Big_Problem

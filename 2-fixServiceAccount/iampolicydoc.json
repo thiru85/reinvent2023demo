@@ -1,0 +1,15 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "AllowDDBAccess",
+			"Effect": "Allow",
+			"Action": [
+				"dynamodb:*"
+			],
+			"Resource": [
+				"arn:aws:dynamodb:us-east-1:081324788528:table/cakeType"
+			]
+		}
+	]
+}

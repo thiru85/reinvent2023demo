@@ -1,0 +1,11 @@
+groups:
+- name: ContainerErrors
+  rules:
+  - alert: HighContainerCount
+    expr: count(kube_pod_container_status_running{namespace="cakeapi"}) > 8
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Heads up! Many pods are being spun up. Cakes are selling well"
+      description: "Heads up! Many pods are being spun up. Cakes are selling well"

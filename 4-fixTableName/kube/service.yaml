@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: cakeapi
+  name: cakeapi
+  namespace: cakeapi
+spec:
+  ports:
+  - name: "80"
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: cakeapi
+  type: LoadBalancer

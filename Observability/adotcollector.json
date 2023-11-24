@@ -1,0 +1,10 @@
+{
+  "manager": {
+    "resources": {
+      "limits": {
+        "cpu": "800m",
+        "memory": "800Mi"
+      }
+    }
+  }
+}

@@ -1,0 +1,1 @@
+awscurl --service="aps" --region="us-east-1" "https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-4feca707-5945-4fa5-a8af-e50da96ea6aa/api/v1/query?query=kube_deployment_status_replicas[30m]"

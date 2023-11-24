@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cakeapi
+    type: reinventdemo
+  name: cakeapi
+  namespace: cakeapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cakeapi
+      type: reinventdemo
+  template:
+    metadata:
+      labels:
+        app: cakeapi
+        type: reinventdemo
+    spec:
+      serviceAccountName: i-am-here-now
+      containers:
+      - image: 081324788528.dkr.ecr.us-east-1.amazonaws.com/cakeapi:4-fixTableName
+        name: cakeapi
+        env:
+        - name: AWS_DEFAULT_REGION
+          value: "us-east-1"
+        - name: TABLENAME
+          value: "cakeType"
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 50m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 200Mi
+        livenessProbe:
+          exec:
+            command:
+            - curl
+            - localhost
+          initialDelaySeconds: 5
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 15
+

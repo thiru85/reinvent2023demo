@@ -1,0 +1,20 @@
+{
+    "collector": {
+      "serviceAccount": {
+        "create": false,
+        "name": "adot-collector"
+      },
+      "amp": {
+        "enabled": true,
+        "remoteWriteEndpoint": "https://aps-workspaces.us-east-1.amazonaws.com/workspaces/ws-4feca707-5945-4fa5-a8af-e50da96ea6aa/api/v1/remote_write"
+      }
+    },
+    "manager": {
+      "resources": {
+        "limits": {
+          "cpu": "800m",
+          "memory": "800Mi"
+        }
+      }
+    }
+  }
