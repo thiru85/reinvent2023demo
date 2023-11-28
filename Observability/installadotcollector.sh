@@ -1,8 +1,9 @@
 #!/bin/bash
-echo "Installing addon to the cluster ..."
+echo "Installing addons to the cluster ..."
 aws eks create-addon --cluster-name osgiliath \
     --addon-name adot \
     --addon-version v0.84.0-eksbuild.1 > /dev/null
+aws eks create-addon --addon-name amazon-cloudwatch-observability --cluster-name osgiliath > /dev/null
 echo "Creating service account for the adot collector..."
 eksctl create iamserviceaccount \
     --name adot-collector \
