@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Installing addons to the cluster ..."
+echo "Installing observability addons to the cluster ..."
 aws eks create-addon --cluster-name osgiliath \
     --addon-name adot \
     --addon-version v0.84.0-eksbuild.1 > /dev/null
@@ -14,3 +14,5 @@ eksctl create iamserviceaccount \
     --attach-policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy \
     --approve \
     --override-existing-serviceaccounts > /dev/null
+echo "Creating the adot collector deployment..."
+kubectl apply -f ./collector-config-amp.yaml > /dev/null
